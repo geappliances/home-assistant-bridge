@@ -1,0 +1,6 @@
+[submodule "lib/tiny"]
+	path = lib/tiny
+	url = https://github.com/ryanplusplus/tiny
+[submodule "lib/tiny-gea3-api"]
+	path = lib/tiny-gea3-api
+	url = https://github.com/geappliances/tiny-gea3-api
