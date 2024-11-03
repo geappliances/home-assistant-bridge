@@ -1,8 +1,6 @@
 /*!
  * @file
  * @brief
- *
- * Copyright GE Appliances - Confidential - All rights reserved.
  */
 
 #include "HomeAssistantBridge.h"
