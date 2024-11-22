@@ -200,6 +200,14 @@ void mqtt_bridge_init(
         case tiny_erd_client_activity_type_subscribe_failed:
           tiny_hsm_send_signal(&self->hsm, signal_subscription_failed, nullptr);
           break;
+
+        case tiny_erd_client_activity_type_write_completed:
+          mqtt_client_update_erd_write_result(self->mqtt_client, args->write_completed.erd, true, 0);
+          break;
+
+        case tiny_erd_client_activity_type_write_failed:
+          mqtt_client_update_erd_write_result(self->mqtt_client, args->write_failed.erd, false, args->write_failed.reason);
+          break;
       }
     });
   tiny_event_subscribe(tiny_erd_client_on_activity(erd_client), &self->erd_client_activity_subscription);
