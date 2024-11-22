@@ -117,7 +117,7 @@ static void update_erd_write_result(i_mqtt_client_t* _self, tiny_erd_t erd, bool
         break;
 
       default:
-        self->client->publish(topic.c_str(), "unknown", true);
+        self->client->publish(topic.c_str(), "unknown error", true);
         break;
     }
   }
