@@ -195,6 +195,41 @@ TEST_GROUP(mqtt_bridge)
     mqtt_client_double_trigger_write_request(&mqtt_client, erd, sizeof(value), &value);
   }
 
+  void should_update_erd_write_result(tiny_erd_t erd, bool success, tiny_erd_client_write_failure_reason_t reason)
+  {
+    mock()
+      .expectOneCall("update_erd_write_result")
+      .onObject(&mqtt_client)
+      .withParameter("erd", erd)
+      .withParameter("success", success)
+      .withParameter("failure_reason", reason);
+  }
+
+  template <typename T>
+  void when_a_write_request_completes_successfully(uint8_t address, tiny_erd_t erd, T value)
+  {
+    tiny_erd_client_on_activity_args_t args;
+    args.type = tiny_erd_client_activity_type_write_completed;
+    args.address = address;
+    args.write_completed.erd = erd;
+    args.write_completed.data = &value;
+    args.write_completed.data_size = sizeof(value);
+    tiny_erd_client_double_trigger_activity_event(&erd_client, &args);
+  }
+
+  template <typename T>
+  void when_a_write_request_completes_unsuccessfully(uint8_t address, tiny_erd_t erd, T value, tiny_erd_client_write_failure_reason_t reason)
+  {
+    tiny_erd_client_on_activity_args_t args;
+    args.type = tiny_erd_client_activity_type_write_failed;
+    args.address = address;
+    args.write_failed.erd = erd;
+    args.write_failed.data = &value;
+    args.write_failed.data_size = sizeof(value);
+    args.write_failed.reason = reason;
+    tiny_erd_client_double_trigger_activity_event(&erd_client, &args);
+  }
+
   void after_mqtt_disconnects()
   {
     mqtt_client_double_trigger_mqtt_disconnect(&mqtt_client);
@@ -324,6 +359,17 @@ TEST(mqtt_bridge, should_forward_write_requests_from_the_mqtt_client)
   given_that_the_bridge_has_been_initialized();
   should_request_erd_write(0xC0, 0xABCD, uint32_t(0x12345678));
   when_a_write_request_is_received(0xABCD, uint32_t(0x12345678));
+}
+
+TEST(mqtt_bridge, should_report_write_results_to_the_mqtt_client)
+{
+  given_that_the_bridge_has_been_initialized();
+
+  should_update_erd_write_result(0xABCD, true, 0);
+  when_a_write_request_completes_successfully(0xC0, 0xABCD, uint32_t(0x12345678));
+
+  should_update_erd_write_result(0xABCD, false, tiny_erd_client_write_failure_reason_not_supported);
+  when_a_write_request_completes_unsuccessfully(0xC0, 0xABCD, uint32_t(0x12345678), tiny_erd_client_write_failure_reason_not_supported);
 }
 
 TEST(mqtt_bridge, should_register_and_update_newly_discovered_erds_when_published_by_the_erd_client_after_mqtt_reconnects)

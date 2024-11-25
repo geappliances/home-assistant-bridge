@@ -6,6 +6,7 @@
 #ifndef i_mqtt_client_h
 #define i_mqtt_client_h
 
+#include "i_tiny_erd_client.h"
 #include "i_tiny_event.h"
 #include "tiny_erd.h"
 
@@ -26,6 +27,8 @@ typedef struct i_mqtt_client_api_t {
 
   void (*update_erd)(i_mqtt_client_t* self, tiny_erd_t erd, const void* value, uint8_t size);
 
+  void (*update_erd_write_result)(i_mqtt_client_t* self, tiny_erd_t erd, bool success, tiny_erd_client_write_failure_reason_t failure_reason);
+
   i_tiny_event_t* (*on_write_request)(i_mqtt_client_t* self);
 
   i_tiny_event_t* (*on_mqtt_disconnect)(i_mqtt_client_t* self);
@@ -45,6 +48,14 @@ static inline void mqtt_client_register_erd(i_mqtt_client_t* self, tiny_erd_t er
 static inline void mqtt_client_update_erd(i_mqtt_client_t* self, tiny_erd_t erd, const void* value, uint8_t size)
 {
   self->api->update_erd(self, erd, value, size);
+}
+
+/*!
+ * Provide the result for the most recently completed write request to an ERD.
+ */
+static inline void mqtt_client_update_erd_write_result(i_mqtt_client_t* self, tiny_erd_t erd, bool success, tiny_erd_client_write_failure_reason_t failure_reason)
+{
+  self->api->update_erd_write_result(self, erd, success, failure_reason);
 }
 
 /*!
