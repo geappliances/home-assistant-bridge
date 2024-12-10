@@ -5,15 +5,15 @@ INC_DIRS := \
   include \
   lib/tiny/include \
   lib/tiny/test/include \
-  lib/tiny-gea3-api/include \
-  lib/tiny-gea3-api/test/include \
+  lib/tiny-gea-api/include \
+  lib/tiny-gea-api/test/include \
   test/include \
 
 SRC_DIRS := \
   lib/tiny/src \
   lib/tiny/test/src \
-  lib/tiny-gea3-api/src \
-  lib/tiny-gea3-api/test/src \
+  lib/tiny-gea-api/src \
+  lib/tiny-gea-api/test/src \
   test \
   test/src \
   test/tests \

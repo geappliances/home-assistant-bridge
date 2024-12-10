@@ -13,7 +13,7 @@
 
 extern "C" {
 #include "mqtt_bridge.h"
-#include "tiny_erd_client.h"
+#include "tiny_gea3_erd_client.h"
 #include "tiny_gea3_interface.h"
 #include "tiny_timer.h"
 }
@@ -39,7 +39,7 @@ class HomeAssistantBridge {
   uint8_t receive_buffer[255];
   uint8_t send_queue_buffer[1000];
 
-  tiny_erd_client_t erd_client;
+  tiny_gea3_erd_client_t erd_client;
   uint8_t client_queue_buffer[1024];
 
   mqtt_bridge_t mqtt_bridge;
