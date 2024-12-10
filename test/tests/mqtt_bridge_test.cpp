@@ -10,7 +10,7 @@ extern "C" {
 #include "CppUTest/TestHarness.h"
 #include "CppUTestExt/MockSupport.h"
 #include "double/mqtt_client_double.hpp"
-#include "double/tiny_erd_client_double.hpp"
+#include "double/tiny_gea3_erd_client_double.hpp"
 #include "double/tiny_timer_group_double.hpp"
 
 TEST_GROUP(mqtt_bridge)
@@ -23,7 +23,7 @@ TEST_GROUP(mqtt_bridge)
   mqtt_bridge_t self;
 
   tiny_timer_group_double_t timer_group;
-  tiny_erd_client_double_t erd_client;
+  tiny_gea3_erd_client_double_t erd_client;
   mqtt_client_double_t mqtt_client;
 
   void setup()
@@ -31,7 +31,7 @@ TEST_GROUP(mqtt_bridge)
     mock().strictOrder();
 
     tiny_timer_group_double_init(&timer_group);
-    tiny_erd_client_double_init(&erd_client);
+    tiny_gea3_erd_client_double_init(&erd_client);
     mqtt_client_double_init(&mqtt_client);
   }
 
@@ -58,11 +58,11 @@ TEST_GROUP(mqtt_bridge)
 
   void after_a_subscription_is_added_or_retained_for(uint8_t address)
   {
-    tiny_erd_client_on_activity_args_t args;
-    args.type = tiny_erd_client_activity_type_subscription_added_or_retained;
+    tiny_gea3_erd_client_on_activity_args_t args;
+    args.type = tiny_gea3_erd_client_activity_type_subscription_added_or_retained;
     args.address = address;
 
-    tiny_erd_client_double_trigger_activity_event(
+    tiny_gea3_erd_client_double_trigger_activity_event(
       &erd_client,
       &args);
   }
@@ -131,14 +131,14 @@ TEST_GROUP(mqtt_bridge)
   template <typename T>
   void when_an_erd_publication_is_received(uint8_t publisher_address, tiny_erd_t erd, T data)
   {
-    tiny_erd_client_on_activity_args_t args;
-    args.type = tiny_erd_client_activity_type_subscription_publication_received;
+    tiny_gea3_erd_client_on_activity_args_t args;
+    args.type = tiny_gea3_erd_client_activity_type_subscription_publication_received;
     args.address = publisher_address;
     args.subscription_publication_received.erd = erd;
     args.subscription_publication_received.data = &data;
     args.subscription_publication_received.data_size = sizeof(data);
 
-    tiny_erd_client_double_trigger_activity_event(
+    tiny_gea3_erd_client_double_trigger_activity_event(
       &erd_client,
       &args);
   }
@@ -153,22 +153,22 @@ TEST_GROUP(mqtt_bridge)
 
   void when_a_subscription_host_came_online_is_received_for(uint8_t address)
   {
-    tiny_erd_client_on_activity_args_t args;
-    args.type = tiny_erd_client_activity_type_subscription_host_came_online;
+    tiny_gea3_erd_client_on_activity_args_t args;
+    args.type = tiny_gea3_erd_client_activity_type_subscription_host_came_online;
     args.address = address;
 
-    tiny_erd_client_double_trigger_activity_event(
+    tiny_gea3_erd_client_double_trigger_activity_event(
       &erd_client,
       &args);
   }
 
   void when_a_subscribe_failure_is_received_for(uint8_t address)
   {
-    tiny_erd_client_on_activity_args_t args;
-    args.type = tiny_erd_client_activity_type_subscribe_failed;
+    tiny_gea3_erd_client_on_activity_args_t args;
+    args.type = tiny_gea3_erd_client_activity_type_subscribe_failed;
     args.address = address;
 
-    tiny_erd_client_double_trigger_activity_event(
+    tiny_gea3_erd_client_double_trigger_activity_event(
       &erd_client,
       &args);
   }
@@ -195,7 +195,7 @@ TEST_GROUP(mqtt_bridge)
     mqtt_client_double_trigger_write_request(&mqtt_client, erd, sizeof(value), &value);
   }
 
-  void should_update_erd_write_result(tiny_erd_t erd, bool success, tiny_erd_client_write_failure_reason_t reason)
+  void should_update_erd_write_result(tiny_erd_t erd, bool success, tiny_gea3_erd_client_write_failure_reason_t reason)
   {
     mock()
       .expectOneCall("update_erd_write_result")
@@ -208,26 +208,26 @@ TEST_GROUP(mqtt_bridge)
   template <typename T>
   void when_a_write_request_completes_successfully(uint8_t address, tiny_erd_t erd, T value)
   {
-    tiny_erd_client_on_activity_args_t args;
-    args.type = tiny_erd_client_activity_type_write_completed;
+    tiny_gea3_erd_client_on_activity_args_t args;
+    args.type = tiny_gea3_erd_client_activity_type_write_completed;
     args.address = address;
     args.write_completed.erd = erd;
     args.write_completed.data = &value;
     args.write_completed.data_size = sizeof(value);
-    tiny_erd_client_double_trigger_activity_event(&erd_client, &args);
+    tiny_gea3_erd_client_double_trigger_activity_event(&erd_client, &args);
   }
 
   template <typename T>
-  void when_a_write_request_completes_unsuccessfully(uint8_t address, tiny_erd_t erd, T value, tiny_erd_client_write_failure_reason_t reason)
+  void when_a_write_request_completes_unsuccessfully(uint8_t address, tiny_erd_t erd, T value, tiny_gea3_erd_client_write_failure_reason_t reason)
   {
-    tiny_erd_client_on_activity_args_t args;
-    args.type = tiny_erd_client_activity_type_write_failed;
+    tiny_gea3_erd_client_on_activity_args_t args;
+    args.type = tiny_gea3_erd_client_activity_type_write_failed;
     args.address = address;
     args.write_failed.erd = erd;
     args.write_failed.data = &value;
     args.write_failed.data_size = sizeof(value);
     args.write_failed.reason = reason;
-    tiny_erd_client_double_trigger_activity_event(&erd_client, &args);
+    tiny_gea3_erd_client_double_trigger_activity_event(&erd_client, &args);
   }
 
   void after_mqtt_disconnects()
@@ -368,8 +368,8 @@ TEST(mqtt_bridge, should_report_write_results_to_the_mqtt_client)
   should_update_erd_write_result(0xABCD, true, 0);
   when_a_write_request_completes_successfully(0xC0, 0xABCD, uint32_t(0x12345678));
 
-  should_update_erd_write_result(0xABCD, false, tiny_erd_client_write_failure_reason_not_supported);
-  when_a_write_request_completes_unsuccessfully(0xC0, 0xABCD, uint32_t(0x12345678), tiny_erd_client_write_failure_reason_not_supported);
+  should_update_erd_write_result(0xABCD, false, tiny_gea3_erd_client_write_failure_reason_not_supported);
+  when_a_write_request_completes_unsuccessfully(0xC0, 0xABCD, uint32_t(0x12345678), tiny_gea3_erd_client_write_failure_reason_not_supported);
 }
 
 TEST(mqtt_bridge, should_register_and_update_newly_discovered_erds_when_published_by_the_erd_client_after_mqtt_reconnects)

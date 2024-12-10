@@ -9,7 +9,7 @@ extern "C" {
 #include "tiny_time_source.h"
 }
 
-static const tiny_erd_client_configuration_t client_configuration = {
+static const tiny_gea3_erd_client_configuration_t client_configuration = {
   .request_timeout = 250,
   .request_retries = 10
 };
@@ -33,9 +33,10 @@ void HomeAssistantBridge::begin(PubSubClient& pubSubClient, Stream& uart, const 
     receive_buffer,
     sizeof(receive_buffer),
     send_queue_buffer,
-    sizeof(send_queue_buffer));
+    sizeof(send_queue_buffer),
+    false);
 
-  tiny_erd_client_init(
+  tiny_gea3_erd_client_init(
     &erd_client,
     &timer_group,
     &gea3_interface.interface,

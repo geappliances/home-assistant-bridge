@@ -88,7 +88,7 @@ static void update_erd(i_mqtt_client_t* _self, tiny_erd_t erd, const void* _valu
   self->client->publish(topic.c_str(), payload.c_str(), true);
 }
 
-static void update_erd_write_result(i_mqtt_client_t* _self, tiny_erd_t erd, bool success, tiny_erd_client_write_failure_reason_t failure_reason)
+static void update_erd_write_result(i_mqtt_client_t* _self, tiny_erd_t erd, bool success, tiny_gea3_erd_client_write_failure_reason_t failure_reason)
 {
   auto self = reinterpret_cast<mqtt_client_adapter_t*>(_self);
 
@@ -104,15 +104,15 @@ static void update_erd_write_result(i_mqtt_client_t* _self, tiny_erd_t erd, bool
   }
   else {
     switch(failure_reason) {
-      case tiny_erd_client_write_failure_reason_retries_exhausted:
+      case tiny_gea3_erd_client_write_failure_reason_retries_exhausted:
         self->client->publish(topic.c_str(), "retries exhausted", true);
         break;
 
-      case tiny_erd_client_write_failure_reason_not_supported:
+      case tiny_gea3_erd_client_write_failure_reason_not_supported:
         self->client->publish(topic.c_str(), "not supported", true);
         break;
 
-      case tiny_erd_client_write_failure_reason_incorrect_size:
+      case tiny_gea3_erd_client_write_failure_reason_incorrect_size:
         self->client->publish(topic.c_str(), "incorrect size", true);
         break;
 
