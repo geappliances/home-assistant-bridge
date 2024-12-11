@@ -66,7 +66,7 @@ static tiny_hsm_result_t state_top(tiny_hsm_t* hsm, tiny_hsm_signal_t signal, co
 
   switch(signal) {
     case signal_subscription_publication_received: {
-      auto args = reinterpret_cast<const tiny_erd_client_on_activity_args_t*>(data);
+      auto args = reinterpret_cast<const tiny_gea3_erd_client_on_activity_args_t*>(data);
       auto erd = args->subscription_publication_received.erd;
 
       if(erd_set(self).find(erd) == erd_set(self).end()) {
@@ -83,8 +83,8 @@ static tiny_hsm_result_t state_top(tiny_hsm_t* hsm, tiny_hsm_signal_t signal, co
 
     case signal_write_requested: {
       auto args = reinterpret_cast<const mqtt_client_on_write_request_args_t*>(data);
-      tiny_erd_client_request_id_t request_id;
-      tiny_erd_client_write(self->erd_client, &request_id, erd_host_address, args->erd, args->value, args->size);
+      tiny_gea3_erd_client_request_id_t request_id;
+      tiny_gea3_erd_client_write(self->erd_client, &request_id, erd_host_address, args->erd, args->value, args->size);
     } break;
 
     default:
@@ -103,7 +103,7 @@ static tiny_hsm_result_t state_subscribing(tiny_hsm_t* hsm, tiny_hsm_signal_t si
     case tiny_hsm_signal_entry:
     case signal_subscription_failed:
     case signal_timer_expired:
-      if(!tiny_erd_client_subscribe(self->erd_client, erd_host_address)) {
+      if(!tiny_gea3_erd_client_subscribe(self->erd_client, erd_host_address)) {
         arm_timer(self, resubscribe_delay);
       }
       break;
@@ -135,7 +135,7 @@ static tiny_hsm_result_t state_subscribed(tiny_hsm_t* hsm, tiny_hsm_signal_t sig
       break;
 
     case signal_timer_expired:
-      tiny_erd_client_retain_subscription(self->erd_client, erd_host_address);
+      tiny_gea3_erd_client_retain_subscription(self->erd_client, erd_host_address);
       break;
 
     case signal_subscription_host_came_online:
@@ -167,7 +167,7 @@ static const tiny_hsm_configuration_t hsm_configuration = {
 void mqtt_bridge_init(
   mqtt_bridge_t* self,
   tiny_timer_group_t* timer_group,
-  i_tiny_erd_client_t* erd_client,
+  i_tiny_gea3_erd_client_t* erd_client,
   i_mqtt_client_t* mqtt_client)
 {
   self->timer_group = timer_group;
@@ -178,39 +178,39 @@ void mqtt_bridge_init(
   tiny_event_subscription_init(
     &self->erd_client_activity_subscription, self, +[](void* context, const void* _args) {
       auto self = reinterpret_cast<mqtt_bridge_t*>(context);
-      auto args = reinterpret_cast<const tiny_erd_client_on_activity_args_t*>(_args);
+      auto args = reinterpret_cast<const tiny_gea3_erd_client_on_activity_args_t*>(_args);
 
       if(args->address != erd_host_address) {
         return;
       }
 
       switch(args->type) {
-        case tiny_erd_client_activity_type_subscription_added_or_retained:
+        case tiny_gea3_erd_client_activity_type_subscription_added_or_retained:
           tiny_hsm_send_signal(&self->hsm, signal_subscription_added_or_retained, nullptr);
           break;
 
-        case tiny_erd_client_activity_type_subscription_publication_received:
+        case tiny_gea3_erd_client_activity_type_subscription_publication_received:
           tiny_hsm_send_signal(&self->hsm, signal_subscription_publication_received, args);
           break;
 
-        case tiny_erd_client_activity_type_subscription_host_came_online:
+        case tiny_gea3_erd_client_activity_type_subscription_host_came_online:
           tiny_hsm_send_signal(&self->hsm, signal_subscription_host_came_online, nullptr);
           break;
 
-        case tiny_erd_client_activity_type_subscribe_failed:
+        case tiny_gea3_erd_client_activity_type_subscribe_failed:
           tiny_hsm_send_signal(&self->hsm, signal_subscription_failed, nullptr);
           break;
 
-        case tiny_erd_client_activity_type_write_completed:
+        case tiny_gea3_erd_client_activity_type_write_completed:
           mqtt_client_update_erd_write_result(self->mqtt_client, args->write_completed.erd, true, 0);
           break;
 
-        case tiny_erd_client_activity_type_write_failed:
+        case tiny_gea3_erd_client_activity_type_write_failed:
           mqtt_client_update_erd_write_result(self->mqtt_client, args->write_failed.erd, false, args->write_failed.reason);
           break;
       }
     });
-  tiny_event_subscribe(tiny_erd_client_on_activity(erd_client), &self->erd_client_activity_subscription);
+  tiny_event_subscribe(tiny_gea3_erd_client_on_activity(erd_client), &self->erd_client_activity_subscription);
 
   tiny_event_subscription_init(
     &self->mqtt_write_request_subscription, self, +[](void* context, const void* _args) {

@@ -23,7 +23,7 @@ static void update_erd(i_mqtt_client_t* self, tiny_erd_t erd, const void* value,
     .withMemoryBufferParameter("value", reinterpret_cast<const uint8_t*>(value), size);
 }
 
-static void update_erd_write_result(i_mqtt_client_t* self, tiny_erd_t erd, bool success, tiny_erd_client_write_failure_reason_t failure_reason)
+static void update_erd_write_result(i_mqtt_client_t* self, tiny_erd_t erd, bool success, tiny_gea3_erd_client_write_failure_reason_t failure_reason)
 {
   mock()
     .actualCall("update_erd_write_result")
