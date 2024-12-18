@@ -35,7 +35,6 @@ class HomeAssistantBridge {
   mqtt_client_adapter_t client_adapter;
 
   tiny_gea3_interface_t gea3_interface;
-  uint8_t send_buffer[255];
   uint8_t receive_buffer[255];
   uint8_t send_queue_buffer[1000];
 

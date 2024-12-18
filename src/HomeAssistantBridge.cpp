@@ -28,12 +28,10 @@ void HomeAssistantBridge::begin(PubSubClient& pubSubClient, Stream& uart, const 
     &gea3_interface,
     &uart_adapter.interface,
     clientAddress,
-    send_buffer,
-    sizeof(send_buffer),
-    receive_buffer,
-    sizeof(receive_buffer),
     send_queue_buffer,
     sizeof(send_queue_buffer),
+    receive_buffer,
+    sizeof(receive_buffer),
     false);
 
   tiny_gea3_erd_client_init(
