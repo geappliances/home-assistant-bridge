@@ -123,6 +123,15 @@ static void update_erd_write_result(i_mqtt_client_t* _self, tiny_erd_t erd, bool
   }
 }
 
+static void write_raw(i_mqtt_client_t* _self, const char* subTopic, const char* payload)
+{
+  auto self = reinterpret_cast<mqtt_client_adapter_t*>(_self);
+
+  auto topic = String("geappliances/") + self->device_id + subTopic;
+
+  self->client->publish(topic.c_str(), payload, true);
+}
+
 static i_tiny_event_t* on_write_request(i_mqtt_client_t* _self)
 {
   auto self = reinterpret_cast<mqtt_client_adapter_t*>(_self);
@@ -154,6 +163,16 @@ void mqtt_client_adapter_init(mqtt_client_adapter_t* self, PubSubClient* client,
 
   tiny_event_init(&self->write_request);
   tiny_event_init(&self->mqtt_disconnect);
+}
+
+PubSubClient* mqtt_client_adapter_get_raw_client(mqtt_client_adapter_t* self)
+{
+  return self->client;
+}
+
+const char* mqtt_client_adapter_get_device_id(mqtt_client_adapter_t* self)
+{
+  return self->device_id;
 }
 
 void mqtt_client_adapter_notify_mqtt_disconnected(mqtt_client_adapter_t* self)

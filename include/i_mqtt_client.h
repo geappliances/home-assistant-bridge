@@ -32,6 +32,8 @@ typedef struct i_mqtt_client_api_t {
   i_tiny_event_t* (*on_write_request)(i_mqtt_client_t* self);
 
   i_tiny_event_t* (*on_mqtt_disconnect)(i_mqtt_client_t* self);
+
+  void (*write_raw)(i_mqtt_client_t* self, const char* subTopic, const char* payload);
 } i_mqtt_client_api_t;
 
 /*!
@@ -72,6 +74,14 @@ static inline i_tiny_event_t* mqtt_client_on_write_request(i_mqtt_client_t* self
 static inline i_tiny_event_t* mqtt_client_on_mqtt_disconnect(i_mqtt_client_t* self)
 {
   return self->api->on_mqtt_disconnect(self);
+}
+
+/*!
+ * Write raw data
+ */
+static inline void mqtt_client_write_raw(i_mqtt_client_t* self, const char* subTopic, const char* payload)
+{
+  self->api->write_raw(self, subTopic, payload);
 }
 
 #endif
