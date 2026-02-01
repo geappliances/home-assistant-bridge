@@ -23,7 +23,7 @@ class HomeAssistantBridge {
  public:
   static constexpr unsigned long baud = 230400;
 
-  void begin(PubSubClient& client, Stream& uart, const char* deviceId, uint8_t clientAddress = 0xE4);
+  void begin(PubSubClient& client, Stream& uart, const char* deviceId, uint8_t clientAddress = 0xE4, unsigned long throttleMs = 0);
   void loop();
   void notifyMqttDisconnected();
 
