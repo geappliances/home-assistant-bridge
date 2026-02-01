@@ -14,7 +14,7 @@ static const tiny_gea3_erd_client_configuration_t client_configuration = {
   .request_retries = 10
 };
 
-void HomeAssistantBridge::begin(PubSubClient& pubSubClient, Stream& uart, const char* deviceId, uint8_t clientAddress)
+void HomeAssistantBridge::begin(PubSubClient& pubSubClient, Stream& uart, const char* deviceId, uint8_t clientAddress, unsigned long throttleMs)
 {
   this->pubSubClient = &pubSubClient;
 
@@ -22,7 +22,7 @@ void HomeAssistantBridge::begin(PubSubClient& pubSubClient, Stream& uart, const 
 
   tiny_uart_adapter_init(&uart_adapter, &timer_group, uart);
 
-  mqtt_client_adapter_init(&client_adapter, &pubSubClient, deviceId);
+  mqtt_client_adapter_init(&client_adapter, &pubSubClient, deviceId, throttleMs);
 
   uptime_monitor_init(
     &uptime_monitor,

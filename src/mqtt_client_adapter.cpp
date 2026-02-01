@@ -3,6 +3,7 @@
  * @brief
  */
 
+#include <Arduino.h>
 #include "mqtt_client_adapter.hpp"
 
 static uint8_t ascii_hex_to_nybble(char ascii_hex)
@@ -67,6 +68,15 @@ static void register_erd(i_mqtt_client_t* _self, tiny_erd_t erd)
 static void update_erd(i_mqtt_client_t* _self, tiny_erd_t erd, const void* _value, uint8_t size)
 {
   auto self = reinterpret_cast<mqtt_client_adapter_t*>(_self);
+
+  if(self->throttle_ms > 0) {
+    auto now = millis();
+    auto it = self->last_publish_times.find(erd);
+    if(it != self->last_publish_times.end() && (now - it->second) < self->throttle_ms) {
+      return;
+    }
+    self->last_publish_times[erd] = now;
+  }
 
   auto payload = String();
   auto bytes = reinterpret_cast<const uint8_t*>(_value);
@@ -151,11 +161,12 @@ static const i_mqtt_client_api_t api = {
   on_mqtt_disconnect
 };
 
-void mqtt_client_adapter_init(mqtt_client_adapter_t* self, PubSubClient* client, const char* deviceId)
+void mqtt_client_adapter_init(mqtt_client_adapter_t* self, PubSubClient* client, const char* deviceId, unsigned long throttle_ms)
 {
   self->interface.api = &api;
   self->client = client;
   self->device_id = deviceId;
+  self->throttle_ms = throttle_ms;
 
   mqtt_callback_self = self;
   client->setCallback(mqtt_callback);

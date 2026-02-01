@@ -24,12 +24,14 @@ typedef struct {
   const char* device_id;
   tiny_event_t write_request;
   tiny_event_t mqtt_disconnect;
+  std::map<uint16_t, unsigned long> last_publish_times;
+  unsigned long throttle_ms;
 } mqtt_client_adapter_t;
 
 /*!
  * Initialize an adapter to expose an Arduino PubSubClient as an i_mqtt_client_t.
  */
-void mqtt_client_adapter_init(mqtt_client_adapter_t* self, PubSubClient* client, const char* deviceId);
+void mqtt_client_adapter_init(mqtt_client_adapter_t* self, PubSubClient* client, const char* deviceId, unsigned long throttle_ms = 0);
 
 /*!
  * Notify the adapter that the MQTT client has connected. Should be called before reconnecting when connection is lost.
