@@ -8,11 +8,9 @@ from esphome.const import (
 )
 from esphome.core import CORE
 import json
-import os
 import re
 import logging
-import urllib.request
-import urllib.error
+from pathlib import Path
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -89,150 +87,56 @@ def sanitize_appliance_name(name):
 
 
 def load_appliance_types():
-    """Load appliance type mappings from the API documentation library.
-    
-    Tries multiple locations to find the appliance type definitions JSON:
-    1. Local submodule directory (for development with checked out repo)
-    2. ESPHome library cache in user's home directory (~/.esphome/external_files/libraries/)
-    3. ESPHome library cache in /config directory (Home Assistant add-on)
-    4. ESPHome library cache relative to component (build directory)
-    5. Parent directories (alternative library location)
-    6. GitHub as fallback (when no local copy is available)
-    
+    """Load appliance type mappings from the lib/public-appliance-api-documentation submodule.
+
+    Resolves the submodule path relative to this file, following symlinks.
+    Compilation fails with a clear error if the file is not found.
+
     Returns:
         Dictionary mapping appliance type IDs (int) to names (str)
     """
-    # ESPHome downloads libraries to .esphome/external_files/libraries
-    # We need to check multiple possible locations
-    
-    data = None
     json_filename = "appliance_api_erd_definitions.json"
-    
-    # Try to find the JSON file in common locations
-    search_paths = []
-    seen_paths = set()  # Track paths to avoid duplicates
-    
-    # Path 1: Local submodule (for local development)
-    component_dir = os.path.dirname(__file__)
-    local_submodule_path = os.path.normpath(os.path.join(
-        component_dir, "..", "..", "lib", "public-appliance-api-documentation", json_filename
-    ))
-    search_paths.append(("local submodule", local_submodule_path))
-    seen_paths.add(local_submodule_path)
-    
-    # Path 2: ESPHome library cache in user's home directory
-    home_dir = os.path.expanduser("~")
-    esphome_cache_path = os.path.join(
-        home_dir, ".esphome", "external_files", "libraries",
-        "public-appliance-api-documentation", json_filename
-    )
-    if esphome_cache_path not in seen_paths:
-        search_paths.append(("ESPHome cache (home)", esphome_cache_path))
-        seen_paths.add(esphome_cache_path)
-    
-    # Path 3: ESPHome library cache in /config (Home Assistant add-on)
-    config_esphome_cache_path = os.path.join(
-        "/config", ".esphome", "external_files", "libraries",
-        "public-appliance-api-documentation", json_filename
-    )
-    if config_esphome_cache_path not in seen_paths:
-        search_paths.append(("ESPHome cache (/config)", config_esphome_cache_path))
-        seen_paths.add(config_esphome_cache_path)
-    
-    # Path 4: ESPHome library cache relative to component
-    # Sometimes ESPHome puts libraries relative to the build directory
-    build_cache_path = os.path.normpath(os.path.join(
-        component_dir, "..", "..", ".esphome", "external_files", "libraries",
-        "public-appliance-api-documentation", json_filename
-    ))
-    if build_cache_path not in seen_paths:
-        search_paths.append(("ESPHome cache (relative)", build_cache_path))
-        seen_paths.add(build_cache_path)
-    
-    # Path 5: Check parent directories for the library
-    parent_dir = os.path.dirname(os.path.dirname(component_dir))
-    alt_library_path = os.path.normpath(os.path.join(
-        parent_dir, "lib", "public-appliance-api-documentation", json_filename
-    ))
-    if alt_library_path not in seen_paths:
-        search_paths.append(("parent library path", alt_library_path))
-        seen_paths.add(alt_library_path)
-    
-    # Try each path
-    for location_name, json_path in search_paths:
-        if os.path.exists(json_path):
-            try:
-                with open(json_path, 'r') as f:
-                    data = json.load(f)
-                _LOGGER.info("Loaded appliance types from %s: %s", location_name, json_path)
-                break
-            except Exception as e:
-                _LOGGER.warning("Failed to load from %s (%s): %s", location_name, json_path, str(e))
-    
-    # If local paths failed, try fetching from GitHub as fallback
-    if data is None:
-        url = "https://raw.githubusercontent.com/joshualongenecker/public-appliance-api-documentation/main/appliance_api_erd_definitions.json"
-        _LOGGER.warning("Could not find local library. Fetching from GitHub as fallback: %s", url)
-        
-        try:
-            with urllib.request.urlopen(url, timeout=10) as response:
-                data = json.loads(response.read().decode('utf-8'))
-            _LOGGER.info("Successfully fetched appliance types from GitHub (fallback)")
-        except urllib.error.HTTPError as e:
-            _LOGGER.error(
-                "HTTP error fetching appliance API documentation (status %d): %s. Using fallback mapping.", 
-                e.code, str(e)
-            )
-            return {
-                0: "Unknown",
-                255: "Unknown"
-            }
-        except urllib.error.URLError as e:
-            _LOGGER.error(
-                "Network error fetching appliance API documentation: %s. Using fallback mapping.", 
-                str(e.reason)
-            )
-            return {
-                0: "Unknown",
-                255: "Unknown"
-            }
-        except Exception as e:
-            _LOGGER.error(
-                "Unexpected error fetching appliance API documentation: %s. Using fallback mapping.", 
-                str(e)
-            )
-            return {
-                0: "Unknown",
-                255: "Unknown"
-            }
-    
-    # Parse the data
+
+    # Resolve __file__ to its real location so symlinks don't produce a wrong
+    # relative path, then navigate to the submodule two directories up.
+    component_dir = Path(__file__).resolve().parent
+    json_path = (
+        component_dir / ".." / ".." / "lib" / "public-appliance-api-documentation" / json_filename
+    ).resolve()
+
+    if not json_path.exists():
+        raise RuntimeError(
+            f"Required library file not found: {json_path}\n"
+            "Ensure the 'lib/public-appliance-api-documentation' submodule is initialised:\n"
+            "  git submodule update --init --recursive"
+        )
+
     try:
-        # Find the ERD with id "0x0008" (Appliance Type)
+        with open(json_path, 'r') as f:
+            data = json.load(f)
+        _LOGGER.info("Loaded appliance types from local submodule: %s", json_path)
+    except Exception as e:
+        raise RuntimeError(f"Failed to read '{json_path}': {e}") from e
+
+    try:
         for erd in data.get("erds", []):
             if erd.get("id") == "0x0008":
-                # Extract the enum values
                 erd_data = erd.get("data", [])
                 if erd_data and erd_data[0].get("type") == "enum":
                     values = erd_data[0].get("values", {})
-                    # Convert string keys to integers and sanitize values for C++
-                    mapping = {}
-                    for key, value in values.items():
-                        int_key = int(key)
-                        sanitized = sanitize_appliance_name(value)
-                        mapping[int_key] = sanitized
-                    
+                    mapping = {
+                        int(key): sanitize_appliance_name(value)
+                        for key, value in values.items()
+                    }
                     _LOGGER.info("Loaded %d appliance type mappings", len(mapping))
                     return mapping
     except Exception as e:
-        _LOGGER.error("Failed to parse appliance types: %s", str(e))
-    
-    # Fallback mapping
-    _LOGGER.warning("Using fallback appliance type mapping")
-    return {
-        0: "Unknown",
-        255: "Unknown"
-    }
+        raise RuntimeError(f"Failed to parse appliance types from '{json_path}': {e}") from e
+
+    raise RuntimeError(
+        f"ERD 0x0008 (Appliance Type) not found in '{json_path}'. "
+        "The submodule may be outdated or corrupt."
+    )
 
 
 def generate_appliance_type_function(appliance_types):
@@ -310,7 +214,8 @@ async def to_code(config):
     # are on the include path — the same technique used by ESPHome's built-in
     # http_request component.
     if CORE.is_esp32:
-        esp32.include_builtin_idf_component("esp_http_client")
+        if hasattr(esp32, 'include_builtin_idf_component'):
+            esp32.include_builtin_idf_component("esp_http_client")
 
     # Get optional GEA3 UART component reference
     if CONF_GEA3_UART_ID in config:
