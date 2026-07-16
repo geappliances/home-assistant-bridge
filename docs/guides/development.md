@@ -16,7 +16,7 @@ Build, test, and debug the GE Appliances Bridge.
 ### Clone
 
 ```bash
-git clone --recursive https://github.com/eddietheengineer/home-assistant-bridge-esphome.git
+git clone --recursive https://github.com/joshualongenecker/home-assistant-bridge-esphome.git
 cd home-assistant-bridge-esphome
 ```
 
